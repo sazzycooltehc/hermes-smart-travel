@@ -5,6 +5,58 @@ import SearchPanel from "@/components/SearchPanel";
 import RouteResults from "@/components/RouteResults";
 import { RouteOption } from "@/components/RouteCard";
 
+import cityDistances from "@/data/cityDistances.json";
+import cityCoordinates from "@/data/cityCoordinates.json";
+
+/* -----------------------------------------
+   HELPER: LOWERCASE CLEAN PLACE NAME
+------------------------------------------ */
+const normalize = (str: string) =>
+  str.trim().toLowerCase().replace(/\s+/g, "");
+
+/* -----------------------------------------
+   HAVERSINE DISTANCE (km)
+------------------------------------------ */
+const haversine = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+  const R = 6371; // earth radius km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * (Math.PI / 180)) *
+      Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLon / 2) ** 2;
+
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
+
+/* -----------------------------------------
+   GET REAL DISTANCE WITHOUT API
+------------------------------------------ */
+const getDistance = async (origin: string, destination: string) => {
+  const o = normalize(origin);
+  const d = normalize(destination);
+
+  if (o === d) return 5;
+
+  // 1️⃣ Try lookup table
+  if (cityDistances[o] && cityDistances[o][d]) {
+    return cityDistances[o][d]; // exact known distance
+  }
+
+  // 2️⃣ If either city found in coordinates → fallback Haversine
+  if (cityCoordinates[o] && cityCoordinates[d]) {
+    const [lat1, lon1] = cityCoordinates[o];
+    const [lat2, lon2] = cityCoordinates[d];
+
+    return Math.round(haversine(lat1, lon1, lat2, lon2));
+  }
+
+  // 3️⃣ If unknown city → generate safe random distance
+  return Math.floor(Math.random() * 400) + 200; // 200–600 km
+};
+
 /* -----------------------------------------
    SPEED VALUES (km/h)
 ------------------------------------------ */
@@ -19,25 +71,7 @@ const TRANSPORT_SPEEDS: Record<string, number> = {
 };
 
 /* -----------------------------------------
-   MOCK DISTANCE HELPER (NO API KEY)
------------------------------------------- */
-
-const getDistance = async (origin: string, destination: string) => {
-  // If same place → give small distance
-  if (origin.toLowerCase() === destination.toLowerCase()) return 5;
-
-  // generate pseudo distance 50–800 km based on string characteristics
-  const base =
-    Math.abs(origin.length * 7 - destination.length * 5) +
-    Math.abs(origin.charCodeAt(0) - destination.charCodeAt(0));
-
-  const distanceKm = Math.max(50, Math.min(800, base)); // ensure realistic range
-
-  return distanceKm;
-};
-
-/* -----------------------------------------
-   FARE PER KM
+   COST / CO₂ / COMFORT CONFIG
 ------------------------------------------ */
 const FARE_PER_KM: Record<string, number> = {
   bus: 0.6,
@@ -49,9 +83,6 @@ const FARE_PER_KM: Record<string, number> = {
   flight: 15,
 };
 
-/* -----------------------------------------
-   CO2 EMISSION (kg per km)
------------------------------------------- */
 const CO2_PER_KM: Record<string, number> = {
   bus: 0.012,
   auto: 0.025,
@@ -62,9 +93,6 @@ const CO2_PER_KM: Record<string, number> = {
   flight: 0.3,
 };
 
-/* -----------------------------------------
-   COMFORT LEVELS
------------------------------------------- */
 const COMFORT: Record<string, number> = {
   bus: 2,
   auto: 2,
@@ -76,33 +104,20 @@ const COMFORT: Record<string, number> = {
 };
 
 /* -----------------------------------------
-   DURATION = distance / speed
+   CALCULATIONS
 ------------------------------------------ */
-const calculateDuration = (distanceKm: number, mode: string): number => {
+const calculateDuration = (distanceKm: number, mode: string) => {
   const speed = TRANSPORT_SPEEDS[mode] || 50;
-  return Math.round((distanceKm / speed) * 60); // in minutes
+  return Math.round((distanceKm / speed) * 60);
 };
 
-/* -----------------------------------------
-   FARE = distance * perKmRate
------------------------------------------- */
-const calculateFare = (mode: string, distanceKm: number): string => {
-  const rate = FARE_PER_KM[mode] || 2;
-  return `₹${Math.round(distanceKm * rate)}`;
-};
+const calculateFare = (mode: string, distanceKm: number) =>
+  `₹${Math.round(distanceKm * (FARE_PER_KM[mode] || 2))}`;
 
-/* -----------------------------------------
-   CO2 = distance * perKm
------------------------------------------- */
-const calculateCO2 = (mode: string, distanceKm: number): string => {
-  const rate = CO2_PER_KM[mode] || 0.02;
-  return `${(distanceKm * rate).toFixed(1)} kg`;
-};
+const calculateCO2 = (mode: string, distanceKm: number) =>
+  `${(distanceKm * (CO2_PER_KM[mode] || 0.02)).toFixed(1)} kg`;
 
-/* -----------------------------------------
-   FORMAT DURATION
------------------------------------------- */
-const formatDuration = (mins: number): string => {
+const formatDuration = (mins: number) => {
   const h = Math.floor(mins / 60);
   const m = mins % 60;
   if (h === 0) return `${m} min`;
@@ -111,11 +126,9 @@ const formatDuration = (mins: number): string => {
 };
 
 /* -----------------------------------------
-   GENERATE ROUTES (Uses dynamic distance)
+   GENERATE ROUTES USING REAL DISTANCE
 ------------------------------------------ */
-const generateMockRoutes = (
-  distanceKm: number
-): RouteOption[] => {
+const generateRoutes = (distanceKm: number): RouteOption[] => {
   const modes = [
     "bus",
     "auto",
@@ -126,14 +139,13 @@ const generateMockRoutes = (
     "flight",
   ];
 
-  return modes.map((mode, index) => {
-    const durationMin = calculateDuration(distanceKm, mode);
-
+  return modes.map((mode, i) => {
+    const mins = calculateDuration(distanceKm, mode);
     return {
-      id: `${index + 1}`,
+      id: `${i + 1}`,
       mode: mode as RouteOption["mode"],
-      durationMinutes: durationMin,
-      duration: formatDuration(durationMin),
+      durationMinutes: mins,
+      duration: formatDuration(mins),
       distance: `${distanceKm} km`,
       fare: calculateFare(mode, distanceKm),
       co2: calculateCO2(mode, distanceKm),
@@ -157,12 +169,9 @@ const Index = () => {
   const handleSearch = async (origin: string, destination: string) => {
     setIsLoading(true);
 
-    // Get mock dynamic distance instead of fixed km
     const distanceKm = await getDistance(origin, destination);
 
-    const mockRoutes = generateMockRoutes(distanceKm);
-    setRoutes(mockRoutes);
-
+    setRoutes(generateRoutes(distanceKm));
     setSearchData({ origin, destination });
 
     setIsLoading(false);
@@ -171,7 +180,6 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-
       <main className="container mx-auto px-4 py-8">
         <HeroSection />
 
@@ -187,15 +195,6 @@ const Index = () => {
           </div>
         )}
       </main>
-
-      {/* background visuals */}
-      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl animate-pulse-slow" />
-        <div
-          className="absolute bottom-20 right-10 w-96 h-96 bg-accent/5 rounded-full blur-3xl animate-pulse-slow"
-          style={{ animationDelay: "2s" }}
-        />
-      </div>
     </div>
   );
 };

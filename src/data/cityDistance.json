@@ -1,0 +1,32 @@
+{
+  "chennai": {
+    "bangalore": 346,
+    "hyderabad": 627,
+    "mumbai": 1338,
+    "delhi": 2200
+  },
+  "bangalore": {
+    "chennai": 346,
+    "mumbai": 984,
+    "hyderabad": 569,
+    "delhi": 2150
+  },
+  "hyderabad": {
+    "chennai": 627,
+    "bangalore": 569,
+    "mumbai": 710,
+    "delhi": 1570
+  },
+  "mumbai": {
+    "chennai": 1338,
+    "bangalore": 984,
+    "hyderabad": 710,
+    "delhi": 1440
+  },
+  "delhi": {
+    "chennai": 2200,
+    "bangalore": 2150,
+    "hyderabad": 1570,
+    "mumbai": 1440
+  }
+}
