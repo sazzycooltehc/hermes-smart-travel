@@ -5,159 +5,81 @@ import SearchPanel from "@/components/SearchPanel";
 import RouteResults from "@/components/RouteResults";
 import { RouteOption } from "@/components/RouteCard";
 
+// Average speeds in km/h for Indian transport modes (based on real-world data)
+const TRANSPORT_SPEEDS: Record<string, number> = {
+  bus: 35,             // City/intercity bus with stops: 30-40 km/h
+  train: 55,           // Local/Express train: 50-60 km/h
+  bike: 45,            // Motorcycle in mixed traffic: 40-50 km/h
+  auto: 28,            // Auto rickshaw in city: 25-30 km/h
+  car: 60,             // Car on highways/city: 55-65 km/h
+  "luxury-train": 110, // Vande Bharat/Shatabdi: 100-130 km/h
+  flight: 750,         // Commercial flight cruise speed: 700-800 km/h
+};
+
+// Calculate distance using: distance = speed × time
+const calculateDistance = (mode: string, durationMinutes: number): string => {
+  const speed = TRANSPORT_SPEEDS[mode] || 50;
+  const distanceKm = (speed * durationMinutes) / 60;
+  return `${Math.round(distanceKm)} km`;
+};
+
+// Format duration from minutes to readable string
+const formatDuration = (minutes: number): string => {
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  if (hours === 0) return `${mins} min`;
+  if (mins === 0) return `${hours}h`;
+  return `${hours}h ${mins}min`;
+};
+
 const generateMockRoutes = (origin: string, destination: string): RouteOption[] => {
-  // Simulated route data for Indian cities - prices in INR
-  // Distance varies by mode, Time: Flight < Train < Car < Bike < Bus
-  return [
-    // Bus - Slowest, cheapest, longer routes due to stops
-    {
-      id: "1",
-      mode: "bus",
-      duration: "2h 30min",
-      durationMinutes: 150,
-      distance: "52 km",
-      fare: "₹45",
-      co2: "1.5 kg",
-      comfort: 2,
-    },
-    {
-      id: "2",
-      mode: "bus",
-      duration: "2h 15min",
-      durationMinutes: 135,
-      distance: "48 km",
-      fare: "₹80",
-      co2: "1.3 kg",
-      comfort: 3,
-    },
+  // Route data with duration in minutes - distance calculated using speed × time formula
+  // Fare order: Bus < Train < Bike < Auto < Car < Luxury Train < Flight
+  // Time order: Flight < Luxury Train < Train < Car < Bike < Auto < Bus
+  
+  const routesData = [
+    // Bus - Slowest, cheapest
+    { id: "1", mode: "bus", durationMinutes: 150, fare: "₹45", co2: "1.5 kg", comfort: 2 },
+    { id: "2", mode: "bus", durationMinutes: 135, fare: "₹80", co2: "1.3 kg", comfort: 3 },
+    { id: "3", mode: "bus", durationMinutes: 180, fare: "₹55", co2: "1.8 kg", comfort: 2 },
+    
+    // Auto rickshaw - City travel, slow but flexible
+    { id: "4", mode: "auto", durationMinutes: 85, fare: "₹150", co2: "2.5 kg", comfort: 2 },
+    { id: "5", mode: "auto", durationMinutes: 75, fare: "₹180", co2: "2.3 kg", comfort: 3 },
+    { id: "6", mode: "auto", durationMinutes: 95, fare: "₹130", co2: "2.8 kg", comfort: 2 },
+    
+    // Bike/Motorcycle - Moderate speed
+    { id: "7", mode: "bike", durationMinutes: 70, fare: "₹200", co2: "2.0 kg", comfort: 3 },
+    { id: "8", mode: "bike", durationMinutes: 60, fare: "₹250", co2: "1.8 kg", comfort: 3 },
+    { id: "9", mode: "bike", durationMinutes: 80, fare: "₹180", co2: "2.2 kg", comfort: 2 },
+    
     // Train - Fast, economical
-    {
-      id: "3",
-      mode: "train",
-      duration: "55 min",
-      durationMinutes: 55,
-      distance: "45 km",
-      fare: "₹120",
-      co2: "0.8 kg",
-      comfort: 4,
-      recommended: true,
-    },
-    {
-      id: "4",
-      mode: "train",
-      duration: "1h 05min",
-      durationMinutes: 65,
-      distance: "50 km",
-      fare: "₹180",
-      co2: "0.9 kg",
-      comfort: 4,
-    },
-    // Bike - Moderate speed, flexible routes
-    {
-      id: "5",
-      mode: "bike",
-      duration: "1h 45min",
-      durationMinutes: 105,
-      distance: "42 km",
-      fare: "₹200",
-      co2: "2.0 kg",
-      comfort: 3,
-    },
-    {
-      id: "6",
-      mode: "bike",
-      duration: "1h 30min",
-      durationMinutes: 90,
-      distance: "38 km",
-      fare: "₹250",
-      co2: "1.8 kg",
-      comfort: 3,
-    },
-    // Auto - City travel, shorter distances
-    {
-      id: "7",
-      mode: "auto",
-      duration: "1h 25min",
-      durationMinutes: 85,
-      distance: "28 km",
-      fare: "₹350",
-      co2: "2.5 kg",
-      comfort: 2,
-    },
-    {
-      id: "8",
-      mode: "auto",
-      duration: "1h 15min",
-      durationMinutes: 75,
-      distance: "25 km",
-      fare: "₹420",
-      co2: "2.3 kg",
-      comfort: 3,
-    },
-    // Car - Faster than bike/bus, direct routes
-    {
-      id: "9",
-      mode: "car",
-      duration: "1h 10min",
-      durationMinutes: 70,
-      distance: "48 km",
-      fare: "₹550",
-      co2: "5.2 kg",
-      comfort: 4,
-    },
-    {
-      id: "10",
-      mode: "car",
-      duration: "1h 00min",
-      durationMinutes: 60,
-      distance: "52 km",
-      fare: "₹750",
-      co2: "5.5 kg",
-      comfort: 5,
-    },
-    // Luxury Train - Premium, faster than regular train
-    {
-      id: "11",
-      mode: "luxury-train",
-      duration: "50 min",
-      durationMinutes: 50,
-      distance: "55 km",
-      fare: "₹1,200",
-      co2: "0.6 kg",
-      comfort: 5,
-    },
-    {
-      id: "12",
-      mode: "luxury-train",
-      duration: "45 min",
-      durationMinutes: 45,
-      distance: "58 km",
-      fare: "₹1,800",
-      co2: "0.5 kg",
-      comfort: 5,
-    },
+    { id: "10", mode: "train", durationMinutes: 55, fare: "₹120", co2: "0.8 kg", comfort: 4, recommended: true },
+    { id: "11", mode: "train", durationMinutes: 65, fare: "₹180", co2: "0.9 kg", comfort: 4 },
+    { id: "12", mode: "train", durationMinutes: 48, fare: "₹220", co2: "0.7 kg", comfort: 4 },
+    
+    // Car - Comfortable, faster
+    { id: "13", mode: "car", durationMinutes: 50, fare: "₹550", co2: "5.2 kg", comfort: 4 },
+    { id: "14", mode: "car", durationMinutes: 42, fare: "₹720", co2: "4.5 kg", comfort: 5 },
+    { id: "15", mode: "car", durationMinutes: 55, fare: "₹480", co2: "5.5 kg", comfort: 4 },
+    
+    // Luxury Train - Vande Bharat/Shatabdi, premium fast
+    { id: "16", mode: "luxury-train", durationMinutes: 35, fare: "₹1,200", co2: "0.6 kg", comfort: 5 },
+    { id: "17", mode: "luxury-train", durationMinutes: 28, fare: "₹1,800", co2: "0.5 kg", comfort: 5 },
+    { id: "18", mode: "luxury-train", durationMinutes: 40, fare: "₹980", co2: "0.7 kg", comfort: 5 },
+    
     // Flight - Fastest, long distance
-    {
-      id: "13",
-      mode: "flight",
-      duration: "35 min",
-      durationMinutes: 35,
-      distance: "320 km",
-      fare: "₹3,500",
-      co2: "45 kg",
-      comfort: 4,
-    },
-    {
-      id: "14",
-      mode: "flight",
-      duration: "40 min",
-      durationMinutes: 40,
-      distance: "450 km",
-      fare: "₹4,800",
-      co2: "52 kg",
-      comfort: 5,
-    },
+    { id: "19", mode: "flight", durationMinutes: 65, fare: "₹3,500", co2: "45 kg", comfort: 4 },
+    { id: "20", mode: "flight", durationMinutes: 85, fare: "₹4,800", co2: "52 kg", comfort: 5 },
+    { id: "21", mode: "flight", durationMinutes: 55, fare: "₹2,800", co2: "38 kg", comfort: 4 },
   ];
+
+  return routesData.map((route) => ({
+    ...route,
+    mode: route.mode as RouteOption["mode"],
+    duration: formatDuration(route.durationMinutes),
+    distance: calculateDistance(route.mode, route.durationMinutes),
+  }));
 };
 
 const Index = () => {
