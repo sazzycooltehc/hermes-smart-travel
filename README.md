@@ -45,6 +45,10 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
+## Note:
+
+The following is a prototype and it is done only with sample data.
+
 ## Flowchart
 
 **URL** : https://sazzycooltehc.github.io/hermes-smart-travel/
