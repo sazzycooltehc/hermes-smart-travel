@@ -19,10 +19,22 @@ const TRANSPORT_SPEEDS: Record<string, number> = {
 };
 
 /* -----------------------------------------
-   FIXED DISTANCE (same for all modes)
-   You can adjust or calculate based on origin-destination later
+   MOCK DISTANCE HELPER (NO API KEY)
 ------------------------------------------ */
-const FIXED_DISTANCE_KM = 650;
+
+const getDistance = async (origin: string, destination: string) => {
+  // If same place → give small distance
+  if (origin.toLowerCase() === destination.toLowerCase()) return 5;
+
+  // generate pseudo distance 50–800 km based on string characteristics
+  const base =
+    Math.abs(origin.length * 7 - destination.length * 5) +
+    Math.abs(origin.charCodeAt(0) - destination.charCodeAt(0));
+
+  const distanceKm = Math.max(50, Math.min(800, base)); // ensure realistic range
+
+  return distanceKm;
+};
 
 /* -----------------------------------------
    FARE PER KM
@@ -34,7 +46,7 @@ const FARE_PER_KM: Record<string, number> = {
   train: 1.2,
   car: 6.5,
   "luxury-train": 10,
-  flight: 20,
+  flight: 15,
 };
 
 /* -----------------------------------------
@@ -47,7 +59,7 @@ const CO2_PER_KM: Record<string, number> = {
   train: 0.008,
   car: 0.045,
   "luxury-train": 0.007,
-  flight: 0.35,
+  flight: 0.3,
 };
 
 /* -----------------------------------------
@@ -99,14 +111,11 @@ const formatDuration = (mins: number): string => {
 };
 
 /* -----------------------------------------
-   GENERATE ALL ROUTES (FULLY FIXED)
+   GENERATE ROUTES (Uses dynamic distance)
 ------------------------------------------ */
 const generateMockRoutes = (
-  origin: string,
-  destination: string
+  distanceKm: number
 ): RouteOption[] => {
-  const distanceKm = FIXED_DISTANCE_KM;
-
   const modes = [
     "bus",
     "auto",
@@ -123,17 +132,13 @@ const generateMockRoutes = (
     return {
       id: `${index + 1}`,
       mode: mode as RouteOption["mode"],
-
       durationMinutes: durationMin,
       duration: formatDuration(durationMin),
-
       distance: `${distanceKm} km`,
-
       fare: calculateFare(mode, distanceKm),
       co2: calculateCO2(mode, distanceKm),
       comfort: COMFORT[mode],
-
-      recommended: mode === "train", // You can change logic here
+      recommended: mode === "train",
     };
   });
 };
@@ -149,15 +154,18 @@ const Index = () => {
   } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSearch = (origin: string, destination: string) => {
+  const handleSearch = async (origin: string, destination: string) => {
     setIsLoading(true);
 
-    setTimeout(() => {
-      const mockRoutes = generateMockRoutes(origin, destination);
-      setRoutes(mockRoutes);
-      setSearchData({ origin, destination });
-      setIsLoading(false);
-    }, 1200);
+    // Get mock dynamic distance instead of fixed km
+    const distanceKm = await getDistance(origin, destination);
+
+    const mockRoutes = generateMockRoutes(distanceKm);
+    setRoutes(mockRoutes);
+
+    setSearchData({ origin, destination });
+
+    setIsLoading(false);
   };
 
   return (
