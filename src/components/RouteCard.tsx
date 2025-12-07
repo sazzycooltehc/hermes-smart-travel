@@ -1,9 +1,9 @@
-import { Car, Train, Bus, Bike, Footprints, Clock, DollarSign, Leaf, Heart, Route } from "lucide-react";
+import { Car, Train, Bus, Bike, Footprints, Plane, IndianRupee, Leaf, Heart, Route } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface RouteOption {
   id: string;
-  mode: "car" | "train" | "bus" | "bike" | "walk";
+  mode: "car" | "train" | "bus" | "bike" | "auto" | "flight" | "luxury-train";
   duration: string;
   durationMinutes: number;
   distance: string;
@@ -16,7 +16,7 @@ export interface RouteOption {
 const modeConfig = {
   car: {
     icon: Car,
-    label: "Drive",
+    label: "Car",
     colorClass: "bg-transport-car",
     bgClass: "bg-transport-car/10",
   },
@@ -34,15 +34,27 @@ const modeConfig = {
   },
   bike: {
     icon: Bike,
-    label: "Cycle",
+    label: "Bike",
     colorClass: "bg-transport-bike",
     bgClass: "bg-transport-bike/10",
   },
-  walk: {
-    icon: Footprints,
-    label: "Walk",
-    colorClass: "bg-transport-walk",
-    bgClass: "bg-transport-walk/10",
+  auto: {
+    icon: Car,
+    label: "Auto Rickshaw",
+    colorClass: "bg-amber-500",
+    bgClass: "bg-amber-500/10",
+  },
+  flight: {
+    icon: Plane,
+    label: "Flight",
+    colorClass: "bg-sky-500",
+    bgClass: "bg-sky-500/10",
+  },
+  "luxury-train": {
+    icon: Train,
+    label: "Luxury Train",
+    colorClass: "bg-purple-500",
+    bgClass: "bg-purple-500/10",
   },
 };
 
@@ -89,7 +101,7 @@ const RouteCard = ({ route, index }: RouteCardProps) => {
             </div>
 
             <div className="flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-accent" />
+              <IndianRupee className="w-4 h-4 text-accent" />
               <span className="text-sm font-medium text-foreground">{route.fare}</span>
             </div>
 
