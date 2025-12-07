@@ -1,4 +1,4 @@
-name: NodeJS with Webpack
+name: NodeJS with Vite
 
 on:
   push:
@@ -13,6 +13,7 @@ jobs:
     strategy:
       matrix:
         node-version: [18.x, 20.x, 22.x]
+        # Include your OS list if you need to test on different platforms
 
     steps:
     - uses: actions/checkout@v4
@@ -21,8 +22,17 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
+        # Cache dependencies for faster runs
+        cache: 'npm' # or 'yarn', 'pnpm' if you use a different package manager
 
-    - name: Build
+    - name: Install dependencies and Build with Vite
       run: |
+        # Use your package manager's install command
         npm install
-        npx webpack
+        
+        # Replace the webpack build command with the Vite build command.
+        # This assumes you have a "build" script in your package.json that runs vite build.
+        npm run build
+        
+        # Alternatively, if you don't have a "build" script, you could use:
+        # npx vite build
