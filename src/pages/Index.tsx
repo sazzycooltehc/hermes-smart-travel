@@ -22,7 +22,7 @@ const TRANSPORT_SPEEDS: Record<string, number> = {
    FIXED DISTANCE (same for all modes)
    You can adjust or calculate based on origin-destination later
 ------------------------------------------ */
-const FIXED_DISTANCE_KM = 120;
+const FIXED_DISTANCE_KM = 650;
 
 /* -----------------------------------------
    FARE PER KM
