@@ -5,8 +5,8 @@ import SearchPanel from "@/components/SearchPanel";
 import RouteResults from "@/components/RouteResults";
 import { RouteOption } from "@/components/RouteCard";
 
-import cityDistances from "@/data/cityDistances.json";
-import cityCoordinates from "@/data/cityCoordinates.json";
+import cityDistances from "@/components/data/cityDistance";
+import cityCoordinates from "@/components/data/cityCoordinate";
 
 /* -----------------------------------------
    HELPER: LOWERCASE CLEAN PLACE NAME
