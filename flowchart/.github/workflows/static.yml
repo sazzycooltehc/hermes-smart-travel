@@ -5,6 +5,10 @@ on:
   # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
+    # 1. ADD: Restrict the workflow to run only when files in the 'flowchart' folder change
+    paths:
+      - 'flowchart/**' # This pattern means any file or folder inside 'flowchart'
+      - '.github/workflows/deploy.yml' # RECOMMENDED: Include the workflow file itself so changes to it run the workflow
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -36,8 +40,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Upload entire repository
-          path: '.'
+          # 2. CHANGE: Upload ONLY the contents of the 'flowchart' folder
+          path: './flowchart' 
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
