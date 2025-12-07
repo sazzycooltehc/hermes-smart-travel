@@ -5,109 +5,170 @@ import SearchPanel from "@/components/SearchPanel";
 import RouteResults from "@/components/RouteResults";
 import { RouteOption } from "@/components/RouteCard";
 
-// Average speeds in km/h for Indian transport modes (based on real-world data)
+/* -----------------------------------------
+   SPEED VALUES (km/h)
+------------------------------------------ */
 const TRANSPORT_SPEEDS: Record<string, number> = {
-  bus: 35,             // City/intercity bus with stops: 30-40 km/h
-  train: 55,           // Local/Express train: 50-60 km/h
-  bike: 45,            // Motorcycle in mixed traffic: 40-50 km/h
-  auto: 28,            // Auto rickshaw in city: 25-30 km/h
-  car: 60,             // Car on highways/city: 55-65 km/h
-  "luxury-train": 110, // Vande Bharat/Shatabdi: 100-130 km/h
-  flight: 750,         // Commercial flight cruise speed: 700-800 km/h
+  bus: 35,
+  auto: 28,
+  bike: 45,
+  train: 55,
+  car: 60,
+  "luxury-train": 110,
+  flight: 750,
 };
 
-// Calculate distance using: distance = speed × time
-const calculateDistance = (mode: string, durationMinutes: number): string => {
+/* -----------------------------------------
+   FIXED DISTANCE (same for all modes)
+   You can adjust or calculate based on origin-destination later
+------------------------------------------ */
+const FIXED_DISTANCE_KM = 120;
+
+/* -----------------------------------------
+   FARE PER KM
+------------------------------------------ */
+const FARE_PER_KM: Record<string, number> = {
+  bus: 0.6,
+  auto: 2,
+  bike: 1.5,
+  train: 1.2,
+  car: 6.5,
+  "luxury-train": 10,
+  flight: 20,
+};
+
+/* -----------------------------------------
+   CO2 EMISSION (kg per km)
+------------------------------------------ */
+const CO2_PER_KM: Record<string, number> = {
+  bus: 0.012,
+  auto: 0.025,
+  bike: 0.02,
+  train: 0.008,
+  car: 0.045,
+  "luxury-train": 0.007,
+  flight: 0.35,
+};
+
+/* -----------------------------------------
+   COMFORT LEVELS
+------------------------------------------ */
+const COMFORT: Record<string, number> = {
+  bus: 2,
+  auto: 2,
+  bike: 2,
+  train: 4,
+  car: 4,
+  "luxury-train": 5,
+  flight: 4,
+};
+
+/* -----------------------------------------
+   DURATION = distance / speed
+------------------------------------------ */
+const calculateDuration = (distanceKm: number, mode: string): number => {
   const speed = TRANSPORT_SPEEDS[mode] || 50;
-  const distanceKm = (speed * durationMinutes) / 60;
-  return `${Math.round(distanceKm)} km`;
+  return Math.round((distanceKm / speed) * 60); // in minutes
 };
 
-// Format duration from minutes to readable string
-const formatDuration = (minutes: number): string => {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  if (hours === 0) return `${mins} min`;
-  if (mins === 0) return `${hours}h`;
-  return `${hours}h ${mins}min`;
+/* -----------------------------------------
+   FARE = distance * perKmRate
+------------------------------------------ */
+const calculateFare = (mode: string, distanceKm: number): string => {
+  const rate = FARE_PER_KM[mode] || 2;
+  return `₹${Math.round(distanceKm * rate)}`;
 };
 
-const generateMockRoutes = (origin: string, destination: string): RouteOption[] => {
-  // Route data with duration in minutes - distance calculated using speed × time formula
-  // Fare order: Bus < Train < Bike < Auto < Car < Luxury Train < Flight
-  // Time order: Flight < Luxury Train < Train < Car < Bike < Auto < Bus
-  
-  const routesData = [
-    // Bus - Slowest, cheapest
-    { id: "1", mode: "bus", durationMinutes: 150, fare: "₹45", co2: "1.5 kg", comfort: 2 },
-    { id: "2", mode: "bus", durationMinutes: 135, fare: "₹80", co2: "1.3 kg", comfort: 3 },
-    { id: "3", mode: "bus", durationMinutes: 180, fare: "₹55", co2: "1.8 kg", comfort: 2 },
-    
-    // Auto rickshaw - City travel, slow but flexible
-    { id: "4", mode: "auto", durationMinutes: 85, fare: "₹150", co2: "2.5 kg", comfort: 2 },
-    { id: "5", mode: "auto", durationMinutes: 75, fare: "₹180", co2: "2.3 kg", comfort: 3 },
-    { id: "6", mode: "auto", durationMinutes: 95, fare: "₹130", co2: "2.8 kg", comfort: 2 },
-    
-    // Bike/Motorcycle - Moderate speed
-    { id: "7", mode: "bike", durationMinutes: 70, fare: "₹200", co2: "2.0 kg", comfort: 3 },
-    { id: "8", mode: "bike", durationMinutes: 60, fare: "₹250", co2: "1.8 kg", comfort: 3 },
-    { id: "9", mode: "bike", durationMinutes: 80, fare: "₹180", co2: "2.2 kg", comfort: 2 },
-    
-    // Train - Fast, economical
-    { id: "10", mode: "train", durationMinutes: 55, fare: "₹120", co2: "0.8 kg", comfort: 4, recommended: true },
-    { id: "11", mode: "train", durationMinutes: 65, fare: "₹180", co2: "0.9 kg", comfort: 4 },
-    { id: "12", mode: "train", durationMinutes: 48, fare: "₹220", co2: "0.7 kg", comfort: 4 },
-    
-    // Car - Comfortable, faster
-    { id: "13", mode: "car", durationMinutes: 50, fare: "₹550", co2: "5.2 kg", comfort: 4 },
-    { id: "14", mode: "car", durationMinutes: 42, fare: "₹720", co2: "4.5 kg", comfort: 5 },
-    { id: "15", mode: "car", durationMinutes: 55, fare: "₹480", co2: "5.5 kg", comfort: 4 },
-    
-    // Luxury Train - Vande Bharat/Shatabdi, premium fast
-    { id: "16", mode: "luxury-train", durationMinutes: 35, fare: "₹1,200", co2: "0.6 kg", comfort: 5 },
-    { id: "17", mode: "luxury-train", durationMinutes: 28, fare: "₹1,800", co2: "0.5 kg", comfort: 5 },
-    { id: "18", mode: "luxury-train", durationMinutes: 40, fare: "₹980", co2: "0.7 kg", comfort: 5 },
-    
-    // Flight - Fastest, long distance
-    { id: "19", mode: "flight", durationMinutes: 65, fare: "₹3,500", co2: "45 kg", comfort: 4 },
-    { id: "20", mode: "flight", durationMinutes: 85, fare: "₹4,800", co2: "52 kg", comfort: 5 },
-    { id: "21", mode: "flight", durationMinutes: 55, fare: "₹2,800", co2: "38 kg", comfort: 4 },
+/* -----------------------------------------
+   CO2 = distance * perKm
+------------------------------------------ */
+const calculateCO2 = (mode: string, distanceKm: number): string => {
+  const rate = CO2_PER_KM[mode] || 0.02;
+  return `${(distanceKm * rate).toFixed(1)} kg`;
+};
+
+/* -----------------------------------------
+   FORMAT DURATION
+------------------------------------------ */
+const formatDuration = (mins: number): string => {
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  if (h === 0) return `${m} min`;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m} min`;
+};
+
+/* -----------------------------------------
+   GENERATE ALL ROUTES (FULLY FIXED)
+------------------------------------------ */
+const generateMockRoutes = (
+  origin: string,
+  destination: string
+): RouteOption[] => {
+  const distanceKm = FIXED_DISTANCE_KM;
+
+  const modes = [
+    "bus",
+    "auto",
+    "bike",
+    "train",
+    "car",
+    "luxury-train",
+    "flight",
   ];
 
-  return routesData.map((route) => ({
-    ...route,
-    mode: route.mode as RouteOption["mode"],
-    duration: formatDuration(route.durationMinutes),
-    distance: calculateDistance(route.mode, route.durationMinutes),
-  }));
+  return modes.map((mode, index) => {
+    const durationMin = calculateDuration(distanceKm, mode);
+
+    return {
+      id: `${index + 1}`,
+      mode: mode as RouteOption["mode"],
+
+      durationMinutes: durationMin,
+      duration: formatDuration(durationMin),
+
+      distance: `${distanceKm} km`,
+
+      fare: calculateFare(mode, distanceKm),
+      co2: calculateCO2(mode, distanceKm),
+      comfort: COMFORT[mode],
+
+      recommended: mode === "train", // You can change logic here
+    };
+  });
 };
 
+/* -----------------------------------------
+   MAIN COMPONENT
+------------------------------------------ */
 const Index = () => {
   const [routes, setRoutes] = useState<RouteOption[]>([]);
-  const [searchData, setSearchData] = useState<{ origin: string; destination: string } | null>(null);
+  const [searchData, setSearchData] = useState<{
+    origin: string;
+    destination: string;
+  } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSearch = (origin: string, destination: string) => {
     setIsLoading(true);
-    
-    // Simulate API call delay
+
     setTimeout(() => {
       const mockRoutes = generateMockRoutes(origin, destination);
       setRoutes(mockRoutes);
       setSearchData({ origin, destination });
       setIsLoading(false);
-    }, 1500);
+    }, 1200);
   };
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       <main className="container mx-auto px-4 py-8">
         <HeroSection />
-        
+
         <SearchPanel onSearch={handleSearch} isLoading={isLoading} />
-        
+
         {routes.length > 0 && searchData && (
           <div className="mt-12">
             <RouteResults
@@ -119,10 +180,13 @@ const Index = () => {
         )}
       </main>
 
-      {/* Background decorative elements */}
+      {/* background visuals */}
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl animate-pulse-slow" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent/5 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: "2s" }} />
+        <div
+          className="absolute bottom-20 right-10 w-96 h-96 bg-accent/5 rounded-full blur-3xl animate-pulse-slow"
+          style={{ animationDelay: "2s" }}
+        />
       </div>
     </div>
   );
