@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hermes Smart Travel: Itinerary Generation Flow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f7f9;
+        }
+        /* Custom styles for the flowchart elements */
+        .flow-container {
+            max-width: 90%;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        .flow-step {
+            background-color: #1a73e8; /* Google Blue */
+            color: white;
+            padding: 15px 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            transition: transform 0.2s;
+        }
+        .flow-step:hover {
+            transform: translateY(-2px);
+        }
+        .flow-title {
+            font-weight: 700;
+            font-size: 1.15em;
+            margin-bottom: 5px;
+        }
+        .flow-desc {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        .flow-arrow {
+            text-align: center;
+            margin: 5px 0;
+            font-size: 2em;
+            line-height: 0.5;
+            color: #555;
+            font-weight: 600;
+        }
+        .flow-label {
+            font-size: 0.85em;
+            color: #3c4043;
+            margin-top: -10px;
+            margin-bottom: 5px;
+            font-style: italic;
+            font-weight: 500;
+        }
+        .flow-end {
+            background-color: #34a853; /* Google Green */
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+
+<div class="flow-container">
+    <h1 class="text-2xl font-bold text-center mb-6 text-gray-800">
+        Hermes Smart Travel: Itinerary Generation Flow
+    </h1>
+    <p class="text-center mb-8 text-gray-600">Step-by-Step Operational Flow (Client to Services)</p>
+
+    <!-- STEP 1: User Initiates Search -->
+    <div class="flow-step">
+        <div class="flow-title">1. User Initiates Search (Frontend)</div>
+        <div class="flow-desc">User enters destination/dates into the **React/Vite** interface and clicks "Search."</div>
+    </div>
+    
+    <div class="flow-arrow">&#8595;</div>
+    <div class="flow-label">HTTP POST Request (Trip/Search)</div>
+
+    <!-- STEP 2: API Request to Backend -->
+    <div class="flow-step">
+        <div class="flow-title">2. API Request to Backend (Application Tier)</div>
+        <div class="flow-desc">Frontend sends request with parameters and user token to the Backend API for validation.</div>
+    </div>
+
+    <div class="flow-arrow">&#8595;</div>
+    <div class="flow-label">Authentication & Orchestration</div>
+
+    <!-- STEP 3: Fetch Data & Integrate APIs -->
+    <div class="flow-step">
+        <div class="flow-title">3. Fetch Data & Integrate APIs (Data Tier)</div>
+        <div class="flow-desc">Backend retrieves **User Preferences** (Database) and calls **External APIs** (Mapping, Booking, Weather) for real-time data.</div>
+    </div>
+    
+    <div class="flow-arrow">&#8595;</div>
+    <div class="flow-label">Business Logic & Aggregation</div>
+
+    <!-- STEP 4: Process & Optimize Itinerary -->
+    <div class="flow-step">
+        <div class="flow-title">4. Process & Optimize Itinerary</div>
+        <div class="flow-desc">Backend aggregates all data, applies business rules, and computes the final optimized itinerary proposal.</div>
+    </div>
+
+    <div class="flow-arrow">&#8595;</div>
+    <div class="flow-label">HTTP Response (JSON Itinerary)</div>
+
+    <!-- STEP 5: Render View Interface -->
+    <div class="flow-step">
+        <div class="flow-title">5. Render View Interface (Presentation Tier)</div>
+        <div class="flow-desc">Frontend (React) receives the JSON, updates state, and renders the complete itinerary using responsive UI components.</div>
+    </div>
+
+    <div class="flow-arrow">&#8595;</div>
+
+    <!-- END STEP -->
+    <div class="flow-step flow-end">
+        <div class="flow-title">END: User Interacts with Results</div>
+        <div class="flow-desc">The user can now view, save, or modify the generated trip.</div>
+    </div>
+</div>
+
+</body>
+</html>
